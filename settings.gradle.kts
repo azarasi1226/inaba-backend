@@ -10,4 +10,6 @@ include(
     "order:order-service",
     "basket:basket-api",
     "basket:basket-service",
+    "encrypt:encrypt-api",
+    "encrypt:encrypt-service",
 )

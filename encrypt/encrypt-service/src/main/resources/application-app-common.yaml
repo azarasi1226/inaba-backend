@@ -1,0 +1,12 @@
+server:
+  port: ${SERVER_PORT:8085}
+
+spring:
+  application:
+    name: inaba-encrypt-service
+
+axon:
+  serializer:
+    general: jackson
+    events: jackson
+    messages: jackson
