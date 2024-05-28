@@ -20,11 +20,6 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
     implementation("org.springframework.retry:spring-retry:2.0.5")
 
-    //axon
-    implementation("org.axonframework:axon-spring-boot-starter")
-    implementation("org.axonframework.extensions.kotlin:axon-kotlin")
-    testImplementation("org.axonframework:axon-test")
-
     //other
     implementation("de.huxhorn.sulky:de.huxhorn.sulky.ulid:8.3.0")
 }
