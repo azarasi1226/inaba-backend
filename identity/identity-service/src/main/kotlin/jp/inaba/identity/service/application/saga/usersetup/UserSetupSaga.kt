@@ -11,9 +11,15 @@ import jp.inaba.identity.api.domain.user.UserCommands
 import jp.inaba.identity.api.domain.user.UserEvents
 import jp.inaba.identity.api.domain.user.UserIdFactory
 import org.axonframework.commandhandling.gateway.CommandGateway
-import org.axonframework.modelling.saga.*
+import org.axonframework.modelling.saga.EndSaga
+import org.axonframework.modelling.saga.MetaDataAssociationResolver
+import org.axonframework.modelling.saga.SagaEventHandler
+import org.axonframework.modelling.saga.SagaLifecycle
+import org.axonframework.modelling.saga.StartSaga
 import org.axonframework.spring.stereotype.Saga
 import org.springframework.beans.factory.annotation.Autowired
+
+private val logger = KotlinLogging.logger {}
 
 @Saga
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
@@ -21,32 +27,35 @@ class UserSetupSaga {
     @Autowired
     @JsonIgnore
     private lateinit var commandGateway: CommandGateway
+
     @Autowired
     @JsonIgnore
     private lateinit var userIdFactory: UserIdFactory
 
     @delegate:JsonIgnore
     private val createUserStep by lazy { CreateUserStep(commandGateway) }
+
     @delegate:JsonIgnore
-    private val updateIdTokenAttributeStep by lazy { UpdateIdTokenAttributeStep(commandGateway) }
+    private val updateIdTokenAttributeForUserIdStep by lazy { UpdateIdTokenAttributeForUserIdStep(commandGateway) }
+
     @delegate:JsonIgnore
     private val createBasketStep by lazy { CreateBasketStep(commandGateway) }
+
     @delegate:JsonIgnore
     private val deleteUserStep by lazy { DeleteUserStep(commandGateway) }
+
     @delegate:JsonIgnore
     private val deleteAuthUserStep by lazy { DeleteAuthUserStep(commandGateway) }
-    @JsonIgnore
-    private val logger = KotlinLogging.logger {}
 
     private lateinit var sagaState: UserSetupSagaState
 
     @StartSaga
     @SagaEventHandler(
         associationResolver = MetaDataAssociationResolver::class,
-        associationProperty = "traceId"
+        associationProperty = "traceId",
     )
     fun on(event: AuthEvents.SignupConfirmed) {
-        logger.info { "catch AuthEvents.SignupConfirmed email:[${event.emailAddress}]" }
+        logger.info { "UserSetupSaga開始 email:[${sagaState.emailAddress}]" }
         sagaState = UserSetupSagaState.create(event)
 
         val userId = userIdFactory.handle()
@@ -61,27 +70,26 @@ class UserSetupSaga {
                     command = deleteAuthUserCommand,
                     onFail = {
                         fatalError()
-                    }
+                    },
                 )
-            }
+            },
         )
     }
 
     @SagaEventHandler(
         associationResolver = MetaDataAssociationResolver::class,
-        associationProperty = "traceId"
+        associationProperty = "traceId",
     )
     fun on(event: UserEvents.Created) {
-        logger.info { "catch UserEvents.Created email:[${sagaState.emailAddress}]" }
-        sagaState = sagaState.associateUserCreatedEvent(event)
+        sagaState.associateUserCreatedEvent(event)
 
-        val attribute = "custom:user_id" to event.id
-        val command = AuthCommands.UpdateIdTokenAttribute(
-            emailAddress = sagaState.emailAddress,
-            idTokenAttributes = mapOf(attribute)
-        )
+        val command =
+            AuthCommands.UpdateIdTokenAttributeForUserId(
+                emailAddress = sagaState.emailAddress,
+                userId = sagaState.userId!!,
+            )
 
-        updateIdTokenAttributeStep.handle(
+        updateIdTokenAttributeForUserIdStep.handle(
             command = command,
             onFail = {
                 val deleteUserCommand = UserCommands.Delete(sagaState.userId!!)
@@ -90,18 +98,17 @@ class UserSetupSaga {
                     command = deleteUserCommand,
                     onFail = {
                         fatalError()
-                    }
+                    },
                 )
-            }
+            },
         )
     }
 
     @SagaEventHandler(
         associationResolver = MetaDataAssociationResolver::class,
-        associationProperty = "traceId"
+        associationProperty = "traceId",
     )
-    fun on(event: AuthEvents.IdTokenAttributeUpdated) {
-        logger.info { "catch AuthEvents.IdTokenAttributeUpdated email:[${sagaState.emailAddress}]" }
+    fun on(event: AuthEvents.IdTokenAttributeForUserIdUpdated) {
         val createBasketCommand = BasketCommands.Create(sagaState.userId!!)
 
         createBasketStep.handle(
@@ -112,50 +119,48 @@ class UserSetupSaga {
                     command = deleteUserCommand,
                     onFail = {
                         fatalError()
-                    }
+                    },
                 )
-            }
+            },
         )
     }
 
     @EndSaga
     @SagaEventHandler(
         associationResolver = MetaDataAssociationResolver::class,
-        associationProperty = "traceId"
+        associationProperty = "traceId",
     )
     fun on(event: BasketEvents.Created) {
-        logger.info { "catch BasketEvents.Created email:[${sagaState.emailAddress}]" }
-        logger.info { "保障トランザクション正常終了 email:[${sagaState.emailAddress}]" }
+        logger.info { "UserSetupSaga正常終了 email:[${sagaState.emailAddress}]" }
     }
 
     @SagaEventHandler(
         associationResolver = MetaDataAssociationResolver::class,
-        associationProperty = "traceId"
+        associationProperty = "traceId",
     )
     fun on(event: UserEvents.Deleted) {
-        logger.info { "catch UserEvents.Deleted email:[${sagaState.emailAddress}]" }
-
         val deleteAuthUserCommand = AuthCommands.DeleteAuthUser(sagaState.emailAddress)
 
         deleteAuthUserStep.handle(
             command = deleteAuthUserCommand,
             onFail = {
                 fatalError()
-            }
+            },
         )
     }
 
     @EndSaga
     @SagaEventHandler(
         associationResolver = MetaDataAssociationResolver::class,
-        associationProperty = "traceId"
+        associationProperty = "traceId",
     )
     fun on(event: AuthEvents.AuthUserDeleted) {
-        logger.info { "保障トランザクション異常終了 email:[${sagaState.emailAddress}]" }
+        logger.warn { "UserSetupSaga補償終了 email:[${sagaState.emailAddress}]" }
     }
 
-    private fun fatalError(){
-        logger.error { "致命的なエラーが発生しました。Sagaを強制停止します email:[${sagaState.emailAddress}]" }
+    private fun fatalError() {
+        logger.error { "UserSetupSaga強制終了 email:[${sagaState.emailAddress}]" }
+        logger.error { "保障トランザクションが最後まで実行されませんでした。データの整合性を確認してください。" }
         SagaLifecycle.end()
     }
 }

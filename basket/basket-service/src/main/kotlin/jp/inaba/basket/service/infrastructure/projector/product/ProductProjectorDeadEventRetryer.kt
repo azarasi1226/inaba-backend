@@ -7,19 +7,19 @@ import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.annotation.Scheduled
 import java.util.concurrent.TimeUnit
 
+private val logger = KotlinLogging.logger {}
+
 @Configuration
 @EnableScheduling
-class ProductProjectorDeadEventRetryer (
-    private val epc: EventProcessingConfiguration
-){
-    private val logger = KotlinLogging.logger {}
-
+class ProductProjectorDeadEventRetryer(
+    private val epc: EventProcessingConfiguration,
+) {
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
     fun retry() {
         val maybeProcessor = epc.sequencedDeadLetterProcessor(ProductProjectorEventProcessor.PROCESSOR_NAME)
-        if(maybeProcessor.isPresent) {
+        if (maybeProcessor.isPresent) {
             val processor = maybeProcessor.get()
-            while(processor.processAny()) {
+            while (processor.processAny()) {
                 logger.info { "DeadLetterQueueの中身を適応できました。" }
             }
         }

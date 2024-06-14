@@ -1,11 +1,13 @@
 package jp.inaba.basket.service.application.basket
 
-import jp.inaba.basket.api.domain.basket.BasketCommands
-import jp.inaba.basket.api.domain.basket.BasketErrors
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
 import jp.inaba.basket.api.domain.basket.BasketId
+import jp.inaba.basket.api.domain.basket.CreateBasketCommand
+import jp.inaba.basket.api.domain.basket.CreateBasketError
 import jp.inaba.basket.service.application.command.basket.CreateBasketInteractor
 import jp.inaba.basket.service.domain.basket.CanCreateBasketVerifier
-import jp.inaba.basket.service.domain.basket.InternalBasketCommands
+import jp.inaba.basket.service.domain.basket.InternalCreateBasketCommand
 import jp.inaba.identity.api.domain.user.UserId
 import org.axonframework.commandhandling.gateway.CommandGateway
 import org.junit.jupiter.api.BeforeEach
@@ -18,8 +20,10 @@ import org.mockito.MockitoAnnotations
 class CreateBasketInteractorTest {
     @Mock
     private lateinit var canCreateBasketVerifier: CanCreateBasketVerifier
+
     @Mock
     private lateinit var commandGateway: CommandGateway
+
     @InjectMocks
     private lateinit var sut: CreateBasketInteractor
 
@@ -29,31 +33,31 @@ class CreateBasketInteractorTest {
     }
 
     @Test
-    fun ユーザーが存在_買い物かごを作成_InternalCommandが配送() {
+    fun `ユーザーが存在_買い物かごを作成_InternalCommandが配送`() {
         val userId = UserId()
-        val command = BasketCommands.Create(userId)
-        Mockito.`when`(canCreateBasketVerifier.existUser(userId))
-            .thenReturn(true)
+        val command = CreateBasketCommand(userId)
+        Mockito.`when`(canCreateBasketVerifier.checkUserExits(userId))
+            .thenReturn(Ok(Unit))
 
         val result = sut.handle(command)
 
         assert(result.isOk())
-        val expectCommand = InternalBasketCommands.Create(BasketId(userId))
+        val expectCommand = InternalCreateBasketCommand(BasketId(userId))
         Mockito.verify(commandGateway, Mockito.only()).sendAndWait<Any>(expectCommand)
     }
 
     @Test
-    fun ユーザーが存在しない_買い物かごを作成_InternalCommandが配送されずエラーが返る() {
+    fun `ユーザーが存在しない_買い物かごを作成_InternalCommandが配送されずエラーが返る`() {
         val userId = UserId()
-        val command = BasketCommands.Create(userId)
-        Mockito.`when`(canCreateBasketVerifier.existUser(userId))
-            .thenReturn(false)
+        val command = CreateBasketCommand(userId)
+        Mockito.`when`(canCreateBasketVerifier.checkUserExits(userId))
+            .thenReturn(Err(CreateBasketError.USER_NOT_FOUND))
 
         val result = sut.handle(command)
 
         assert(!result.isOk())
-        assert(result.errorCode == BasketErrors.Create.USER_NOT_FOUND.errorCode)
-        val expectCommand = InternalBasketCommands.Create(BasketId(userId))
+        assert(result.errorCode == CreateBasketError.USER_NOT_FOUND.errorCode)
+        val expectCommand = InternalCreateBasketCommand(BasketId(userId))
         Mockito.verify(commandGateway, Mockito.never()).sendAndWait<Any>(expectCommand)
     }
 }
