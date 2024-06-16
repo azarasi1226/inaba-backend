@@ -2,44 +2,42 @@ package jp.inaba.basket.service.application.basket
 
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
+import io.mockk.MockKAnnotations
+import io.mockk.every
+import io.mockk.impl.annotations.InjectMockKs
+import io.mockk.impl.annotations.MockK
+import io.mockk.verify
 import jp.inaba.basket.api.domain.basket.BasketId
 import jp.inaba.basket.api.domain.basket.BasketItemQuantity
 import jp.inaba.basket.api.domain.basket.SetBasketItemCommand
 import jp.inaba.basket.api.domain.basket.SetBasketItemError
 import jp.inaba.basket.service.application.command.basket.SetBasketItemInteractor
 import jp.inaba.basket.service.domain.basket.CanSetBasketItemVerifier
-import jp.inaba.basket.service.domain.basket.InternalCreateBasketCommand
 import jp.inaba.basket.service.domain.basket.InternalSetBasketItemCommand
 import jp.inaba.catalog.api.domain.product.ProductId
 import jp.inaba.common.domain.shared.ActionCommandResult
-import jp.inaba.identity.api.domain.user.UserId
 import org.axonframework.commandhandling.gateway.CommandGateway
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentMatchers.any
-import org.mockito.InjectMocks
-import org.mockito.Mock
-import org.mockito.Mockito
-import org.mockito.MockitoAnnotations
 
 class SetBasketItemInteractorTest {
-    @Mock
+    @MockK
     private lateinit var canSetBasketItemVerifier: CanSetBasketItemVerifier
 
-    @Mock
+    @MockK
     private lateinit var commandGateway: CommandGateway
 
-    @InjectMocks
+    @InjectMockKs
     private lateinit var sut: SetBasketItemInteractor
 
     @BeforeEach
     fun before() {
-        MockitoAnnotations.openMocks(this)
+        MockKAnnotations.init(this)
     }
 
     @Test
     fun `商品が存在_商品を買い物かごに入れる_InternalCommandが配送`() {
-        val basketId = BasketId(UserId())
+        val basketId = BasketId()
         val productId = ProductId()
         val basketItemQuantity = BasketItemQuantity(1)
         val command =
@@ -48,10 +46,12 @@ class SetBasketItemInteractorTest {
                 productId = productId,
                 basketItemQuantity = basketItemQuantity,
             )
-        Mockito.`when`(canSetBasketItemVerifier.checkProductExits(productId))
-            .thenReturn(Ok(Unit))
-        Mockito.`when`(commandGateway.sendAndWait<ActionCommandResult>(any()))
-            .thenReturn(ActionCommandResult.ok())
+        every {
+            canSetBasketItemVerifier.checkProductExits(productId)
+        } returns Ok(Unit)
+        every {
+            commandGateway.sendAndWait<ActionCommandResult>(any())
+        } returns ActionCommandResult.ok()
 
         val result = sut.handle(command)
 
@@ -62,12 +62,14 @@ class SetBasketItemInteractorTest {
                 productId = productId,
                 basketItemQuantity = basketItemQuantity,
             )
-        Mockito.verify(commandGateway, Mockito.only()).sendAndWait<ActionCommandResult>(expectCommand)
+        verify(exactly = 1) {
+            commandGateway.sendAndWait<ActionCommandResult>(expectCommand)
+        }
     }
 
     @Test
     fun `商品が存在しない_商品を買い物かごに入れる_InternalCommandが配送されずエラーが返る`() {
-        val basketId = BasketId(UserId())
+        val basketId = BasketId()
         val productId = ProductId()
         val basketItemQuantity = BasketItemQuantity(1)
         val command =
@@ -76,8 +78,9 @@ class SetBasketItemInteractorTest {
                 productId = productId,
                 basketItemQuantity = basketItemQuantity,
             )
-        Mockito.`when`(canSetBasketItemVerifier.checkProductExits(productId))
-            .thenReturn(Err(SetBasketItemError.PRODUCT_NOT_FOUND))
+        every {
+            canSetBasketItemVerifier.checkProductExits(productId)
+        } returns Err(SetBasketItemError.PRODUCT_NOT_FOUND)
 
         val result = sut.handle(command)
 
@@ -89,6 +92,8 @@ class SetBasketItemInteractorTest {
                 productId = productId,
                 basketItemQuantity = basketItemQuantity,
             )
-        Mockito.verify(commandGateway, Mockito.never()).sendAndWait<ActionCommandResult>(expectCommand)
+        verify(exactly = 0) {
+            commandGateway.sendAndWait<ActionCommandResult>(expectCommand)
+        }
     }
 }

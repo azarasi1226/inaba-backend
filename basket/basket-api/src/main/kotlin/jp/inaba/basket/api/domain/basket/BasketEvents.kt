@@ -6,6 +6,7 @@ sealed interface BasketEvent {
 
 data class BasketCreatedEvent(
     override val id: String,
+    val userId: String,
 ) : BasketEvent
 
 data class BasketItemSetEvent(
@@ -20,5 +21,9 @@ data class BasketItemDeletedEvent(
 ) : BasketEvent
 
 data class BasketClearedEvent(
+    override val id: String,
+) : BasketEvent
+
+data class BasketDeletedEvent(
     override val id: String,
 ) : BasketEvent

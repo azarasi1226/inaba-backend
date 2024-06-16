@@ -11,7 +11,7 @@ dependencies {
     implementation(project(":basket:basket-api"))
     implementation(project(":catalog:catalog-api"))
 
-    // spring
+    // spring bom
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-web")
@@ -19,15 +19,17 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     runtimeOnly("com.h2database:h2")
     runtimeOnly("com.mysql:mysql-connector-j")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
-    implementation("org.springframework.retry:spring-retry:2.0.5")
+    testImplementation("org.springframework.boot:spring-boot-starter-test") {
+        exclude(module = "mockito-core")
+    }
 
-    // axon
+    // axon bom
     implementation("org.axonframework:axon-spring-boot-starter")
     implementation("org.axonframework.extensions.kotlin:axon-kotlin")
     testImplementation("org.axonframework:axon-test")
 
     // other
-    implementation("de.huxhorn.sulky:de.huxhorn.sulky.ulid:8.3.0")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
+    implementation("org.springframework.retry:spring-retry:2.0.5")
+    testImplementation("com.ninja-squad:springmockk:4.0.2")
 }

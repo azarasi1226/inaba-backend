@@ -9,7 +9,6 @@ import jp.inaba.basket.api.domain.basket.setBasketItem
 import jp.inaba.basket.service.presentation.basket.BasketController
 import jp.inaba.catalog.api.domain.product.ProductId
 import jp.inaba.common.presentation.shared.ErrorResponse
-import jp.inaba.identity.api.domain.user.UserId
 import org.axonframework.commandhandling.gateway.CommandGateway
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -22,15 +21,14 @@ import org.springframework.web.bind.annotation.RestController
 class SetBasketItemController(
     private val commandGateway: CommandGateway,
 ) : BasketController {
-    @PostMapping("/{userId}/items")
+    @PostMapping("/{basketId}/items")
     fun handle(
-        @PathVariable("userId")
-        rawUserId: String,
+        @PathVariable("basketId")
+        rawBasketId: String,
         @RequestBody
         request: SetBasketItemRequest,
     ): ResponseEntity<Any> {
-        val userId = UserId(rawUserId)
-        val basketId = BasketId(userId)
+        val basketId = BasketId(rawBasketId)
         val productId = ProductId(request.productId)
         val basketItemQuantity = BasketItemQuantity(request.itemQuantity)
         val command =
@@ -57,6 +55,10 @@ class SetBasketItemController(
                     SetBasketItemError.PRODUCT_MAX_KIND_OVER ->
                         ResponseEntity
                             .status(HttpStatus.BAD_REQUEST)
+                            .body(ErrorResponse(it))
+                    SetBasketItemError.BASKET_DELETED ->
+                        ResponseEntity
+                            .status(HttpStatus.NOT_FOUND)
                             .body(ErrorResponse(it))
                 }
             },

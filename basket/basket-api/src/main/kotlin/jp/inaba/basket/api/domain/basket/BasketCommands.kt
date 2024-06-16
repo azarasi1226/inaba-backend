@@ -5,21 +5,26 @@ import jp.inaba.identity.api.domain.user.UserId
 import org.axonframework.commandhandling.RoutingKey
 import org.axonframework.modelling.command.TargetAggregateIdentifier
 
+interface BasketCommand {
+    @get:RoutingKey
+    val id: BasketId
+}
+
 interface BasketAggregateCommand {
     @get:TargetAggregateIdentifier
     val id: BasketId
 }
 
 data class CreateBasketCommand(
-    @RoutingKey
+    override val id: BasketId,
     val userId: UserId,
-)
+) : BasketCommand
 
 data class SetBasketItemCommand(
-    val id: BasketId,
+    override val id: BasketId,
     val productId: ProductId,
     val basketItemQuantity: BasketItemQuantity,
-)
+) : BasketCommand
 
 data class DeleteBasketItemCommand(
     override val id: BasketId,
@@ -27,5 +32,9 @@ data class DeleteBasketItemCommand(
 ) : BasketAggregateCommand
 
 data class ClearBasketCommand(
+    override val id: BasketId,
+) : BasketAggregateCommand
+
+data class DeleteBasketCommand(
     override val id: BasketId,
 ) : BasketAggregateCommand

@@ -1,4 +1,4 @@
-package jp.inaba.basket.service.infrastructure.projector.basketitem
+package jp.inaba.catalog.service.infrastructure.projector.product
 
 import org.axonframework.common.jpa.EntityManagerProvider
 import org.axonframework.common.transaction.TransactionManager
@@ -7,12 +7,10 @@ import org.axonframework.eventhandling.EventMessage
 import org.axonframework.eventhandling.TrackingEventProcessorConfiguration
 import org.axonframework.eventhandling.deadletter.jpa.JpaSequencedDeadLetterQueue
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Configuration
 
-@Configuration
-class BasketItemProjectorEventProcessor {
+class ProductProjectorEventProcessor {
     companion object {
-        const val PROCESSOR_NAME = "basket-item-projector"
+        const val PROCESSOR_NAME = "product-projector"
         private const val PROCESSOR_COUNT = 5
         private const val DEAD_LETTER_QUEUE_SEQUENCE = 256
     }

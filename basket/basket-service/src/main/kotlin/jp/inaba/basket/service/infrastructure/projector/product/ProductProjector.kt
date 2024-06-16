@@ -1,8 +1,11 @@
 package jp.inaba.basket.service.infrastructure.projector.product
 
+import jp.inaba.basket.service.infrastructure.jpa.basket.BasketJpaRepository
 import jp.inaba.basket.service.infrastructure.jpa.product.ProductJpaEntity
 import jp.inaba.basket.service.infrastructure.jpa.product.ProductJpaRepository
-import jp.inaba.catalog.api.domain.product.ProductEvents
+import jp.inaba.catalog.api.domain.product.ProductCreatedEvent
+import jp.inaba.catalog.api.domain.product.ProductDeletedEvent
+import jp.inaba.catalog.api.domain.product.ProductUpdatedEvent
 import org.axonframework.config.ProcessingGroup
 import org.axonframework.eventhandling.EventHandler
 import org.springframework.stereotype.Component
@@ -10,11 +13,12 @@ import org.springframework.stereotype.Component
 @Component
 @ProcessingGroup(ProductProjectorEventProcessor.PROCESSOR_NAME)
 class ProductProjector(
-    private val repository: ProductJpaRepository,
+    private val productRepository: ProductJpaRepository,
+    private val basketRepository: BasketJpaRepository,
 ) {
     @EventHandler
-    fun on(event: ProductEvents.Created) {
-        val entity =
+    fun on(event: ProductCreatedEvent) {
+        val product =
             ProductJpaEntity(
                 id = event.id,
                 name = event.name,
@@ -22,25 +26,27 @@ class ProductProjector(
                 price = event.price,
             )
 
-        repository.save(entity)
+        productRepository.save(product)
     }
 
     @EventHandler
-    fun on(event: ProductEvents.Updated) {
-        val entity =
-            repository.findById(event.id)
-                .orElseThrow()
+    fun on(event: ProductUpdatedEvent) {
+        productRepository.findById(event.id)
+            .ifPresent {
+                val updatedProduct =
+                    it.copy(
+                        name = event.name,
+                        imageUrl = event.imageUrl,
+                        price = event.price,
+                    )
 
-        entity.name = event.name
-        entity.imageUrl = event.imageUrl
-        entity.price = event.price
-
-        repository.save(entity)
+                productRepository.save(updatedProduct)
+            }
     }
 
     @EventHandler
-    fun on(event: ProductEvents.Deleted) {
-        // TODO("このままだと確定でエラーになる。先にbasketItem消すか、ステータス方式にしなければ")
-        repository.deleteById(event.id)
+    fun on(event: ProductDeletedEvent) {
+        basketRepository.deleteByProductId(event.id)
+        productRepository.deleteById(event.id)
     }
 }

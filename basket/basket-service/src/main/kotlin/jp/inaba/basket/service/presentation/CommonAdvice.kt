@@ -36,19 +36,19 @@ class CommonAdvice {
                         .body(
                             ErrorResponse(
                                 errorCode = "",
-                                errorMessage = "CommandHandlerNotFound"
-                            )
+                                errorMessage = "CommandHandlerNotFound",
+                            ),
                         )
                 else -> {
-                    logger.error { "原因不明のエラーが発生しました。" }
+                    logger.error { "Command実行中に原因不明のエラーが発生しました。" }
 
                     ResponseEntity
-                        .status(HttpStatus.NOT_FOUND)
+                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(
                             ErrorResponse(
                                 errorCode = "",
                                 errorMessage = ex.message ?: "CommandHandlerException",
-                            )
+                            ),
                         )
                 }
             }
