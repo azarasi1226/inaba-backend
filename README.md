@@ -127,3 +127,4 @@ AWS_KMS_MASTER-KEY_ID={さっきコピーしたやつ}
 * [CatalogService Swagger](http://localhost:8082/swagger-ui/index.html)
 * [BasketService Swagger](http://localhost:8083/swagger-ui/index.html)
 * [IdentityService Swagger](http://localhost:8084/swagger-ui/index.html)
+* [DataKeyService Swagger](http://localhost:8085/swagger-ui/index.html)
