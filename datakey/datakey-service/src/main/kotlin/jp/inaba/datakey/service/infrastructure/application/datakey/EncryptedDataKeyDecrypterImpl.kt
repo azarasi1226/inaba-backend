@@ -7,9 +7,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.services.kms.KmsClient
-import software.amazon.awssdk.services.kms.model.DataKeySpec
 import software.amazon.awssdk.services.kms.model.DecryptRequest
-import software.amazon.awssdk.services.kms.model.GenerateDataKeyRequest
 
 @Service
 class EncryptedDataKeyDecrypterImpl(
