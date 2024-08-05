@@ -8,3 +8,10 @@ enum class CreateDataKeyError(
 ) : DomainError {
     DATAKEY_ALREADY_EXISTS("1", "指定のRelationIdですでにデータキーが存在します"),
 }
+
+enum class GetDataKeyError(
+    override val errorCode: String,
+    override val errorMessage: String,
+) : DomainError {
+    DATAKEY_NOT_FOUND("1", "データキーが存在しません"),
+}
