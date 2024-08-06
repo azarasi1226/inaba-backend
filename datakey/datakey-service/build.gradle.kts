@@ -19,4 +19,10 @@ dependencies {
     // other
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
     implementation("software.amazon.awssdk:kms:2.26.21")
+
+    // https://mvnrepository.com/artifact/net.devh/grpc-server-spring-boot-starter
+    implementation("net.devh:grpc-server-spring-boot-starter:3.1.0.RELEASE")
+
+    // GRPC Proto
+    implementation(project(":datakey:datakey-grpc"))
 }

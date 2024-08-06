@@ -12,4 +12,5 @@ include(
     "basket:basket-service",
     "datakey:datakey-service",
     "datakey:datakey-client",
+    "datakey:datakey-grpc",
 )

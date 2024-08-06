@@ -14,3 +14,6 @@ spring:
         - app-common
         - app-prod
         - datastore-mysql
+grpc:
+  server:
+    port: 9095
