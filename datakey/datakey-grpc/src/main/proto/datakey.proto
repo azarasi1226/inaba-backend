@@ -3,11 +3,20 @@ syntax = "proto3";
 package dataKey;
 
 option java_multiple_files = true;
-option java_package = "jp.inaba.datakey.service";
+option java_package = "jp.inaba.datakey.grpc";
 option java_outer_classname = "DataKeyProto";
 
 service DataKey {
+  rpc createDataKey (CreateDataKeyRequest) returns (CreateDataKeyReply);
   rpc getDataKey (GetDataKeyRequest) returns (GetDataKeyReply);
+}
+
+message CreateDataKeyRequest {
+  string relationId = 1;
+}
+
+message CreateDataKeyReply {
+  string base64PlaneDataKey = 1;
 }
 
 message GetDataKeyRequest {
