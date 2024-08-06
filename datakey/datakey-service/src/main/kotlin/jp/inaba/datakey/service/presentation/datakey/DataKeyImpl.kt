@@ -1,6 +1,5 @@
 package jp.inaba.datakey.service.jp.inaba.datakey.service.presentation.datakey
 
-import com.github.michaelbull.result.get
 import io.grpc.stub.StreamObserver
 import jp.inaba.datakey.service.DataKeyGrpc
 import jp.inaba.datakey.service.GetDataKeyReply
@@ -11,7 +10,7 @@ import jp.inaba.datakey.service.jp.inaba.datakey.service.domain.datakey.Relation
 import net.devh.boot.grpc.server.service.GrpcService
 
 @GrpcService
-public class DataKeyImpl(
+class DataKeyImpl(
     private val getDataKeyInteractor: GetDataKeyInteractor,
 ): DataKeyGrpc.DataKeyImplBase() {
     @Override
